@@ -15,6 +15,7 @@
                     ;
                     CONSTANT LED_port, 80               ;8 simple LEDs. Is an OUTPUT port.
                     CONSTANT DATA_IN_PORT, 00	        ;input data port. this is an INPUT port.
+		    CONSTANT LED_DISPLAY, 40
                     ;
                     ;**************************************************************************************
                     ; Special Register usage
@@ -185,7 +186,7 @@
                     RETURN 
 
         average:    ; average is the hsb
-		    OUTPUT s2, LED_port_val
+		    OUTPUT s2, LED_display
 		    JUMP reset
 
 	reset:	    LOAD s0, 00 ;resets registers to 0
