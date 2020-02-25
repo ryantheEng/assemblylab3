@@ -54,88 +54,6 @@
                     ;
                     ;
                     ;
-                    ; ASCII table
-                    ;
-                    CONSTANT character_a, 61
-                    CONSTANT character_b, 62
-                    CONSTANT character_c, 63
-                    CONSTANT character_d, 64
-                    CONSTANT character_e, 65
-                    CONSTANT character_f, 66
-                    CONSTANT character_g, 67
-                    CONSTANT character_h, 68
-                    CONSTANT character_i, 69
-                    CONSTANT character_j, 6A
-                    CONSTANT character_k, 6B
-                    CONSTANT character_l, 6C
-                    CONSTANT character_m, 6D
-                    CONSTANT character_n, 6E
-                    CONSTANT character_o, 6F
-                    CONSTANT character_p, 70
-                    CONSTANT character_q, 71
-                    CONSTANT character_r, 72
-                    CONSTANT character_s, 73
-                    CONSTANT character_t, 74
-                    CONSTANT character_u, 75
-                    CONSTANT character_v, 76
-                    CONSTANT character_w, 77
-                    CONSTANT character_x, 78
-                    CONSTANT character_y, 79
-                    CONSTANT character_z, 7A
-                    CONSTANT character_A, 41
-                    CONSTANT character_B, 42
-                    CONSTANT character_C, 43
-                    CONSTANT character_D, 44
-                    CONSTANT character_E, 45
-                    CONSTANT character_F, 46
-                    CONSTANT character_G, 47
-                    CONSTANT character_H, 48
-                    CONSTANT character_I, 49
-                    CONSTANT character_J, 4A
-                    CONSTANT character_K, 4B
-                    CONSTANT character_L, 4C
-                    CONSTANT character_M, 4D
-                    CONSTANT character_N, 4E
-                    CONSTANT character_O, 4F
-                    CONSTANT character_P, 50
-                    CONSTANT character_Q, 51
-                    CONSTANT character_R, 52
-                    CONSTANT character_S, 53
-                    CONSTANT character_T, 54
-                    CONSTANT character_U, 55
-                    CONSTANT character_V, 56
-                    CONSTANT character_W, 57
-                    CONSTANT character_X, 58
-                    CONSTANT character_Y, 59
-                    CONSTANT character_Z, 5A
-                    CONSTANT character_0, 30
-                    CONSTANT character_1, 31
-                    CONSTANT character_2, 32
-                    CONSTANT character_3, 33
-                    CONSTANT character_4, 34
-                    CONSTANT character_5, 35
-                    CONSTANT character_6, 36
-                    CONSTANT character_7, 37
-                    CONSTANT character_8, 38
-                    CONSTANT character_9, 39
-                    CONSTANT character_colon, 3A
-                    CONSTANT character_stop, 2E
-                    CONSTANT character_semi_colon, 3B
-                    CONSTANT character_minus, 2D
-                    CONSTANT character_divide, 2F       ;'/'
-                    CONSTANT character_plus, 2B
-                    CONSTANT character_comma, 2C
-                    CONSTANT character_less_than, 3C
-                    CONSTANT character_greater_than, 3E
-                    CONSTANT character_equals, 3D
-                    CONSTANT character_space, 20
-                    CONSTANT character_CR, 0D           ;carriage return
-                    CONSTANT character_question, 3F     ;'?'
-                    CONSTANT character_dollar, 24
-                    CONSTANT character_exclaim, 21      ;'!'
-                    CONSTANT character_BS, 08           ;Back Space command character
-                    ;
-                    ;
                     ;
                     ;
                     ;
@@ -144,12 +62,11 @@
                     ;**************************************************************************************
                     ;
         cold_start: LOAD s0, 00         ;                 ;clear 1 second counter and clear LEDs
-                    STORE s1, counter   ;
-                    STORE s2, low_sum   ;
-                    STORE s3, high_sum  ;
+                    STORE s0, counter   ;
+                    STORE s1, low_sum   ;
+                    STORE s2, high_sum  ;
                     ;
                     ;
-                    OUTPUT s0, LED_port ;
                     ;
                     ENABLE INTERRUPT    ;               ;enable one second heart beat
                     ;
@@ -161,19 +78,17 @@
                     ;
                     ; Display welcome message for design
                     ;
-      main_program: LOAD s0, 00         ;            ;turn on LEDR0  
-                    OUTPUT s0, LED_port ;            
-                    CALL delay_1s	    ;  
-			        LOAD s0, 01         ;            ;turn off LEDR0  
-                    OUTPUT s0, LED_port ;
-                    CALL delay_1s       ;
+      main_program: CALL led_blink
                     ;
                     JUMP main_program   ;
-        led_blink:  LOAD so,00          ;
+      		    ;
+  led_blink:        LOAD s0,00          ;
                     OUTPUT s0, LED_port ;
                     CALL delay_1ms      ;
                     LOAD s0,01          ;
-
+ 		    OUTPUT s0, LED_port ;
+                    CALL delay_1s       ;
+		    RETURN
                     ;            
                     ;
                     ;**************************************************************************************
@@ -260,15 +175,23 @@
                     COMPARE s0, FF 
                     JUMP Z, average
 
-                    INPUT s3, DATA_IN_PORT
-                    ADD s1,s3
-                    JUMP NC, increment
-                    ADDCY s2, 00
+                    INPUT s3, DATA_IN_PORT ; get audio data to s3
+                    ADD s1,s3 ; add audio data s3 to lsb
+                    CALL NC, increment	;increment counter
+                    ADDCY s2, 00	;add carry to hsb
+		    JUMP end
 
         increment:  ADD s0,01
-                    JUMP end
+                    RETURN 
 
-        average:    ADD s2,s1
+        average:    ; average is the hsb
+		    OUTPUT s2, LED_port_val
+		    JUMP reset
+
+	reset:	    LOAD s0, 00 ;resets registers to 0
+		    LOAD s1,00
+		    LOAD s2,00
+		    JUMP end
 
         end:        STORE s1, low_sum
                     STORE s2, high_sum
